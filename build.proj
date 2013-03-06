@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">$(MSBuildProjectDirectory)\</SolutionDir>
+    <WixDir>$([System.IO.Path]::Combine($(SolutionDir), "packages", "wix.3.7"))</WixDir>
+  </PropertyGroup>
+  
+  <Target Name="package">
+    <MakeDir Directories="$(WixDir)" Condition="!Exists('$(WixDir)')" />
+    <DownloadWixToolkit OutputFilename="$(WixDir)\wix.zip" Condition="!Exists('$(WixDir)\wix.zip')" />
+    <Unzip ZipPath="$(WixDir)\wix.zip" TargetPath="$(WixDir)" />
+  </Target>
+
+  <UsingTask TaskName="DownloadWixToolkit" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <OutputFilename ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Net" />
+      <Using Namespace="Microsoft.Build.Framework" />
+      <Using Namespace="Microsoft.Build.Utilities" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+                try {
+                    OutputFilename = Path.GetFullPath(OutputFilename);
+
+                    Log.LogMessage("Downloading WiX Toolset v3.7...");
+                    WebClient webClient = new WebClient();
+                    //webClient.DownloadFile("http://wix.codeplex.com/downloads/get/582220", OutputFilename);
+                    webClient.DownloadFile("http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=wix&DownloadId=582220&FileTime=130008656367470000&Build=20172", OutputFilename);
+
+                    return true;
+                }
+                catch (Exception ex) {
+                    Log.LogErrorFromException(ex);
+                    return false;
+                }
+            ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+  
+  <UsingTask TaskName="Unzip" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <ZipPath ParameterType="System.String" Required="true" />
+      <TargetPath ParameterType="System.String" Required="true"/>
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Core" />
+      <Reference Include="System.IO.Compression.FileSystem"/>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Net" />
+      <Using Namespace="Microsoft.Build.Framework" />
+      <Using Namespace="Microsoft.Build.Utilities" />
+      <Using Namespace="System.IO.Compression" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+                try {
+                    ZipPath = Path.GetFullPath(ZipPath);
+
+                    Log.LogMessage("Extracting WiX Toolset v3.7...");
+                    ZipFile.ExtractToDirectory(ZipPath, TargetPath);
+                    return true;
+                }
+                catch (Exception ex) {
+                    Log.LogErrorFromException(ex);
+                    return false;
+                }
+        
+            ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+</Project>
