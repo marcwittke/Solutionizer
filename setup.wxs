@@ -24,6 +24,7 @@
     <Property Id="ARPHELPLINK" Value="https://github.com/thoemmi/Solutionizer/issues" />
     <Property Id="ARPCONTACT" Value="Thomas Freudenberg" />
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/thoemmi/Solutionizer" />
+    <Property Id="ARPPRODUCTICON" Value="icon" />
 
     <Upgrade Id="$(var.UpgradeGuid)">
       <UpgradeVersion 
@@ -133,9 +134,13 @@
         After="FindRelatedProducts">NEWPRODUCTFOUND</Custom>
     </InstallUISequence>
 
-    <WixVariable Id='WixUILicenseRtf' Overridable='yes' Value='Assets/MS-PL.rtf'/>
+    <WixVariable Id='WixUILicenseRtf' Value='Assets\MS-PL.rtf'/>
+    <WixVariable Id="WixUIBannerBmp" Value="Assets\setup_banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="Assets\setup_dialog.bmp" />
 
     <UIRef Id="WixUI_Minimal" />
     <UIRef Id="WixUI_ErrorProgressText" />
+
+    <Icon Id="icon" SourceFile="Assets\logo.ico"/>
   </Product>
 </Wix>
