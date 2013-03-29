@@ -33,25 +33,17 @@
 
     <Upgrade Id="$(var.UpgradeGuid)">
       <UpgradeVersion 
-        Minimum="!(bind.FileVersion.SOLUTIONIZER_EXE)"
-        IncludeMinimum="no"
-        OnlyDetect="yes"
-        Language="1033"
-        Property="NEWPRODUCTFOUND" />
+        Minimum="!(bind.FileVersion.SOLUTIONIZER_EXE)" 
+        OnlyDetect="yes" 
+        Property="NEWERVERSIONDETECTED"/>
       <UpgradeVersion 
-        Minimum="0.1.0.0"
-        IncludeMinimum="yes"
-        Maximum="!(bind.FileVersion.SOLUTIONIZER_EXE)"
-        IncludeMaximum="no"
-        Language="1033"
-        Property="UPGRADEFOUND" />
-      <UpgradeVersion 
-        Minimum="1.0.0.0" 
-        Maximum="99.0.0.0"
-        Property="PREVIOUSVERSIONSINSTALLED"
+        Minimum="0.0.0" 
+        Maximum="!(bind.FileVersion.SOLUTIONIZER_EXE)" 
         IncludeMinimum="yes" 
-        IncludeMaximum="no" />
+        IncludeMaximum="no"
+        Property="OLDERVERSIONBEINGUPGRADED"/>
     </Upgrade>
+    <Condition Message="A newer version of this software is already installed.">NOT NEWERVERSIONDETECTED</Condition>
 
     <PropertyRef Id="NETFRAMEWORK40FULL"/>
     <Condition Message="This setup requires the full .NET Framework 4.0 installed.">
@@ -126,18 +118,8 @@
       Error="There is already a newer version installed." />
 
     <InstallExecuteSequence>
-      <Custom 
-        Action="PreventDowngrading"
-        After="FindRelatedProducts">NEWPRODUCTFOUND</Custom>
-      <RemoveExistingProducts 
-        After="InstallFinalize" />
+      <RemoveExistingProducts After="InstallValidate"/>
     </InstallExecuteSequence>
-
-    <InstallUISequence>
-      <Custom 
-        Action="PreventDowngrading"
-        After="FindRelatedProducts">NEWPRODUCTFOUND</Custom>
-    </InstallUISequence>
 
     <WixVariable Id='WixUILicenseRtf' Value='Assets\MS-PL.rtf'/>
     <WixVariable Id="WixUIBannerBmp" Value="Assets\setup_banner.bmp" />
