@@ -4,12 +4,20 @@
   <PropertyGroup>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">$(MSBuildProjectDirectory)\</SolutionDir>
     <WixDir>$([System.IO.Path]::Combine($(SolutionDir), "packages", "wix.3.7"))</WixDir>
+    <TargetDir>$([System.IO.Path]::Combine($(SolutionDir), "publish"))</TargetDir>
+    <WxsFile>$(SolutionDir)\setup.wxs</WxsFile>
   </PropertyGroup>
   
   <Target Name="package">
+    <!-- download and extract WiX if necessary -->
     <MakeDir Directories="$(WixDir)" Condition="!Exists('$(WixDir)')" />
     <DownloadWixToolkit OutputFilename="$(WixDir)\wix.zip" Condition="!Exists('$(WixDir)\wix.zip')" />
-    <Unzip ZipPath="$(WixDir)\wix.zip" TargetPath="$(WixDir)" />
+    <Unzip ZipPath="$(WixDir)\wix.zip" TargetPath="$(WixDir)" Condition="!Exists('$(WixDir)\heat.exe')" />
+    
+    <!--<Exec Command="$(WixDir)\WixCop.exe -indent:2 $(WxsFile)" />-->
+    <MakeDir Directories="$(TargetDir)" Condition="!Exists('$(TargetDir)')" />
+    <Exec Command="$(WixDir)\candle.exe -out $(TargetDir)\setup.wixobj $(WxsFile) " />
+    <Exec Command="$(WixDir)\light.exe -ext WixNetFxExtension -ext WixUIExtension -out $(TargetDir)\Solutionizer.msi $(TargetDir)\setup.wixobj" />
   </Target>
 
   <UsingTask TaskName="DownloadWixToolkit" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
@@ -30,8 +38,7 @@
 
                     Log.LogMessage("Downloading WiX Toolset v3.7...");
                     WebClient webClient = new WebClient();
-                    //webClient.DownloadFile("http://wix.codeplex.com/downloads/get/582220", OutputFilename);
-                    webClient.DownloadFile("http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=wix&DownloadId=582220&FileTime=130008656367470000&Build=20172", OutputFilename);
+                    webClient.DownloadFile("http://wixtoolset.org/releases/v3.7.1222.0/wix37-binaries.zip", OutputFilename);
 
                     return true;
                 }
