@@ -17,7 +17,7 @@
     <!--<Exec Command="$(WixDir)\WixCop.exe -indent:2 $(WxsFile)" />-->
     <MakeDir Directories="$(TargetDir)" Condition="!Exists('$(TargetDir)')" />
     <Exec Command="$(WixDir)\candle.exe -out $(TargetDir)\setup.wixobj $(WxsFile) " />
-    <Exec Command="$(WixDir)\light.exe -ext WixNetFxExtension -ext WixUIExtension -out $(TargetDir)\Solutionizer.msi $(TargetDir)\setup.wixobj" />
+    <Exec Command="$(WixDir)\light.exe -ext WixNetFxExtension -ext WixUIExtension -ext WixUtilExtension -out $(TargetDir)\Solutionizer.msi $(TargetDir)\setup.wixobj" />
   </Target>
 
   <UsingTask TaskName="DownloadWixToolkit" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">

@@ -26,6 +26,11 @@
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/thoemmi/Solutionizer" />
     <Property Id="ARPPRODUCTICON" Value="icon" />
 
+    <!-- start application after install -->
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch Solutionizer" />
+    <Property Id="WixShellExecTarget" Value="[#SOLUTIONIZER_EXE]" />
+    <CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
+
     <Upgrade Id="$(var.UpgradeGuid)">
       <UpgradeVersion 
         Minimum="!(bind.FileVersion.SOLUTIONIZER_EXE)"
@@ -138,9 +143,16 @@
     <WixVariable Id="WixUIBannerBmp" Value="Assets\setup_banner.bmp" />
     <WixVariable Id="WixUIDialogBmp" Value="Assets\setup_dialog.bmp" />
 
-    <UIRef Id="WixUI_Minimal" />
-    <UIRef Id="WixUI_ErrorProgressText" />
-
+    <UI>
+      <UIRef Id="WixUI_Minimal" />
+      <UIRef Id="WixUI_ErrorProgressText" />
+      <Publish
+        Dialog="ExitDialog"
+        Control="Finish"
+        Event="DoAction"
+        Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+    </UI>
+    
     <Icon Id="icon" SourceFile="Assets\logo.ico"/>
   </Product>
 </Wix>
