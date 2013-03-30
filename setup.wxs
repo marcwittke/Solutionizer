@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-  <!--<?include $(sys.CURRENTDIR)SetupVariables.wxi ?>-->
 
   <?define UpgradeGuid="{C3666D56-FBED-4ADE-AD5E-94298DE449F4}" ?>
+  <?define ProductVersion="!(bind.FileVersion.SOLUTIONIZER_EXE)" ?>
   
   <Product 
     Name="Solutionizer" 
     Id="*" 
     UpgradeCode="$(var.UpgradeGuid)" 
-    Version="!(bind.FileVersion.SOLUTIONIZER_EXE)" 
+    Version="$(var.ProductVersion)" 
     Manufacturer="Thomas Freudenberg" Language="1033">
     
     <Package 
@@ -33,12 +33,12 @@
 
     <Upgrade Id="$(var.UpgradeGuid)">
       <UpgradeVersion 
-        Minimum="!(bind.FileVersion.SOLUTIONIZER_EXE)" 
+        Minimum="$(var.ProductVersion)" 
         OnlyDetect="yes" 
         Property="NEWERVERSIONDETECTED"/>
       <UpgradeVersion 
         Minimum="0.0.0" 
-        Maximum="!(bind.FileVersion.SOLUTIONIZER_EXE)" 
+        Maximum="$(var.ProductVersion)" 
         IncludeMinimum="yes" 
         IncludeMaximum="no"
         Property="OLDERVERSIONBEINGUPGRADED"/>
