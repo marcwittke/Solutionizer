@@ -48,6 +48,10 @@ namespace Solutionizer.Infrastructure {
             return _releases ?? Enumerable.Empty<Release>();
         }
 
+        public bool IsUpdateAvailable {
+            get { return _releases.Any(r => r.Version > _currentVersion); }
+        }
+
         public static IEnumerable<Release> ReadReleases(XDocument doc) {
             var releases = from release in doc.Descendants("Release")
                            select new Release {

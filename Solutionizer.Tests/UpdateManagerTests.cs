@@ -20,6 +20,19 @@ namespace Solutionizer.Tests {
     <Notes>tata</Notes>
   </Release>
 </Releases>";
+        private const string RELEASE_XML_2 = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Releases>
+  <Release>
+    <Version>1.0.0.0</Version>
+    <PublishedAt>2013-04-01 13:00:00Z</PublishedAt>
+    <Notes>tata</Notes>
+  </Release>
+  <Release>
+    <Version>1.1.0.0</Version>
+    <PublishedAt>2013-04-01 14:00:00Z</PublishedAt>
+    <Notes>tata2</Notes>
+  </Release>
+</Releases>";
 
         [Test]
         public void NewUpdateManagerHasNoReleases() {
@@ -41,13 +54,14 @@ namespace Solutionizer.Tests {
 
             sut.ReadLocalReleases().Wait();
 
+            Assert.IsFalse(sut.IsUpdateAvailable);
             var releases = sut.GetReleases().ToArray();
             Assert.AreEqual(1, releases.Length);
             Assert.AreEqual("tata", releases[0].Notes);
         }
 
         [Test]
-        public void CanReadRemoteReleases() {
+        public void CanReadRemoteReleasesWithoutUpdates() {
             var sut = new UpdateManager(new Version(1, 0, 0, 0)) {
                 ReadLocalXml = () => {
                     var tcs = new TaskCompletionSource<XDocument>();
@@ -66,9 +80,37 @@ namespace Solutionizer.Tests {
                 .Unwrap()
                 .Wait();
 
+            Assert.IsFalse(sut.IsUpdateAvailable);
             var releases = sut.GetReleases().ToArray();
             Assert.AreEqual(1, releases.Length);
             Assert.AreEqual("tata", releases[0].Notes);
+        }
+
+        [Test]
+        public void CanReadRemoteReleasesWithUpdates() {
+            var sut = new UpdateManager(new Version(1, 0, 0, 0)) {
+                ReadLocalXml = () => {
+                    var tcs = new TaskCompletionSource<XDocument>();
+                    tcs.SetResult(XDocument.Parse(RELEASE_XML_0));
+                    return tcs.Task;
+                },
+                ReadRemoteXml = () => {
+                    var tcs = new TaskCompletionSource<XDocument>();
+                    tcs.SetResult(XDocument.Parse(RELEASE_XML_2));
+                    return tcs.Task;
+                }
+            };
+
+            sut.ReadLocalReleases()
+                .ContinueWith(_ => sut.ReadRemoteReleases())
+                .Unwrap()
+                .Wait();
+
+            Assert.IsTrue(sut.IsUpdateAvailable);
+            var releases = sut.GetReleases().ToArray();
+            Assert.AreEqual(2, releases.Length);
+            Assert.AreEqual("tata", releases[0].Notes);
+            Assert.AreEqual("tata2", releases[1].Notes);
         }
 
         [Test]
