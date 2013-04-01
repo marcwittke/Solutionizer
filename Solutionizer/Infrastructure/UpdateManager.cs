@@ -32,10 +32,15 @@ namespace Solutionizer.Infrastructure {
             });
         }
 
-        public Task CheckVersion() {
+        public Task ReadRemoteReleases() {
             return ReadRemoteXml().ContinueWith(t => {
-                var releases = ReadReleases(t.Result);
-                _releases.AddRange(releases.Where(r => _releases.All(_ => _.Version != r.Version)));
+                try {
+                    var releases = ReadReleases(t.Result);
+                    var newReleases = releases.Where(r => _releases.All(_ => _.Version != r.Version)).ToList();
+                    _releases.AddRange(newReleases);
+                } catch (Exception ex) {
+                    _log.ErrorException("Reading remote release file failed", ex);
+                }
             });
         }
 

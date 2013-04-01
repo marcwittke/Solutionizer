@@ -9,8 +9,10 @@ using Solutionizer.Infrastructure;
 
 namespace Solutionizer.Tests {
     [TestFixture]
-    public class UpdateManagerTests {
-        private const string RELEASE_XML = @"<?xml version=""1.0"" encoding=""utf-8""?>
+    public class UpdateManagerTests : TestBaseWithLogging {
+        private const string RELEASE_XML_0 = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Releases/>";
+        private const string RELEASE_XML_1 = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Releases>
   <Release>
     <Version>1.0.0.0</Version>
@@ -32,7 +34,7 @@ namespace Solutionizer.Tests {
             var sut = new UpdateManager(new Version(1,0,0,0)) {
                 ReadLocalXml = () => {
                     var tcs = new TaskCompletionSource<XDocument>();
-                    tcs.SetResult(XDocument.Parse(RELEASE_XML));
+                    tcs.SetResult(XDocument.Parse(RELEASE_XML_1));
                     return tcs.Task;
                 }
             };
@@ -44,10 +46,34 @@ namespace Solutionizer.Tests {
             Assert.AreEqual("tata", releases[0].Notes);
         }
 
+        [Test]
+        public void CanReadRemoteReleases() {
+            var sut = new UpdateManager(new Version(1, 0, 0, 0)) {
+                ReadLocalXml = () => {
+                    var tcs = new TaskCompletionSource<XDocument>();
+                    tcs.SetResult(XDocument.Parse(RELEASE_XML_0));
+                    return tcs.Task;
+                },
+                ReadRemoteXml = () => {
+                    var tcs = new TaskCompletionSource<XDocument>();
+                    tcs.SetResult(XDocument.Parse(RELEASE_XML_1));
+                    return tcs.Task;
+                }
+            };
+
+            sut.ReadLocalReleases()
+                .ContinueWith(_ => sut.ReadRemoteReleases())
+                .Unwrap()
+                .Wait();
+
+            var releases = sut.GetReleases().ToArray();
+            Assert.AreEqual(1, releases.Length);
+            Assert.AreEqual("tata", releases[0].Notes);
+        }
 
         [Test]
         public void CanReadXml() {
-            var doc = XDocument.Parse(RELEASE_XML);
+            var doc = XDocument.Parse(RELEASE_XML_1);
             var releases = UpdateManager.ReadReleases(doc).ToArray();
 
             Assert.AreEqual(1, releases.Length);
@@ -65,15 +91,15 @@ namespace Solutionizer.Tests {
                 }
             };
             var doc = UpdateManager.WriteReleases(releases);
-            Assert.AreEqual(RELEASE_XML, XDocumentToString(doc));
+            Assert.AreEqual(RELEASE_XML_1, XDocumentToString(doc));
         }
 
         [Test]
         public void CanReadAndWrite() {
-            var doc = XDocument.Parse(RELEASE_XML);
+            var doc = XDocument.Parse(RELEASE_XML_1);
             var releases = UpdateManager.ReadReleases(doc);
             doc = UpdateManager.WriteReleases(releases);
-            Assert.AreEqual(RELEASE_XML, XDocumentToString(doc));
+            Assert.AreEqual(RELEASE_XML_1, XDocumentToString(doc));
         }
 
         private static string XDocumentToString(XDocument doc) {
