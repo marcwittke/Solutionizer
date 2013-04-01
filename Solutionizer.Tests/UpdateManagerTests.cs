@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using NUnit.Framework;
@@ -17,6 +18,32 @@ namespace Solutionizer.Tests {
     <Notes>tata</Notes>
   </Release>
 </Releases>";
+
+        [Test]
+        public void NewUpdateManagerHasNoReleases() {
+            var sut = new UpdateManager(new Version(1,0,0,0));
+
+            var releases = sut.GetReleases().ToArray();
+            Assert.AreEqual(0, releases.Length);
+        }
+
+        [Test]
+        public void CanReadLocalReleases() {
+            var sut = new UpdateManager(new Version(1,0,0,0)) {
+                ReadLocalXml = () => {
+                    var tcs = new TaskCompletionSource<XDocument>();
+                    tcs.SetResult(XDocument.Parse(RELEASE_XML));
+                    return tcs.Task;
+                }
+            };
+
+            sut.ReadLocalReleases().Wait();
+
+            var releases = sut.GetReleases().ToArray();
+            Assert.AreEqual(1, releases.Length);
+            Assert.AreEqual("tata", releases[0].Notes);
+        }
+
 
         [Test]
         public void CanReadXml() {

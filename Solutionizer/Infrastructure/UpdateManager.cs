@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,39 +8,33 @@ using NLog;
 
 namespace Solutionizer.Infrastructure {
     public class UpdateManager {
-        private static readonly Logger _log = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly Logger _log = LogManager.GetCurrentClassLogger();
 
         private Version _currentVersion;
-        private readonly string _releaseFileName;
 
-        public UpdateManager(Version currentVersion, string releaseFileName) {
+        public UpdateManager(Version currentVersion) {
             _currentVersion = currentVersion;
-            _releaseFileName = releaseFileName;
         }
 
-        public Func<Task<string>> ReadXml;
+        public Func<Task<XDocument>> ReadLocalXml;
+        public Func<Task<XDocument>> ReadRemoteXml;
 
         private List<Release> _releases;
 
-        public void ReadLocalReleases() {
-            if (!File.Exists(_releaseFileName)) {
-                _releases = new List<Release>();
-                return;
-            }
-
-            try {
-                var doc = XDocument.Load(_releaseFileName);
-                _releases = ReadReleases(doc).ToList();
-            } catch (Exception ex) {
-                _log.ErrorException("Reading local release file failed", ex);
-                _releases = new List<Release>();
-            }
+        public Task ReadLocalReleases() {
+            return ReadLocalXml().ContinueWith(t => {
+                try {
+                    _releases = ReadReleases(t.Result).ToList();
+                } catch (Exception ex) {
+                    _log.ErrorException("Reading local release file failed", ex);
+                    _releases = new List<Release>();
+                }
+            });
         }
 
         public Task CheckVersion() {
-            return ReadXml().ContinueWith(content => {
-                var doc = XDocument.Parse(content.Result);
-                var releases = ReadReleases(doc);
+            return ReadRemoteXml().ContinueWith(t => {
+                var releases = ReadReleases(t.Result);
                 _releases.AddRange(releases.Where(r => _releases.All(_ => _.Version != r.Version)));
             });
         }
