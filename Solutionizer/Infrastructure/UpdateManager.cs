@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -10,7 +9,7 @@ namespace Solutionizer.Infrastructure {
     public class UpdateManager {
         private static readonly Logger _log = LogManager.GetCurrentClassLogger();
 
-        private Version _currentVersion;
+        private readonly Version _currentVersion;
 
         public UpdateManager(Version currentVersion) {
             _currentVersion = currentVersion;
@@ -53,13 +52,18 @@ namespace Solutionizer.Infrastructure {
         }
 
         public static IEnumerable<Release> ReadReleases(XDocument doc) {
-            var releases = from release in doc.Descendants("Release")
-                           select new Release {
-                               Version = Version.Parse(release.Element("Version").Value),
-                               PublishedAt = DateTimeOffset.ParseExact(release.Element("PublishedAt").Value, "u", null),
-                               Notes = release.Element("Notes").Value
-                           };
-            return releases;
+            try {
+                var releases = from release in doc.Descendants("Release")
+                               select new Release {
+                                   Version = Version.Parse(release.Element("Version").Value),
+                                   PublishedAt = DateTimeOffset.ParseExact(release.Element("PublishedAt").Value, "u", null),
+                                   Notes = release.Element("Notes").Value
+                               };
+                return releases;
+            } catch (Exception ex) {
+                _log.ErrorException("Reading releases failed", ex);
+                return Enumerable.Empty<Release>();
+            }
         }
 
         public static XDocument WriteReleases(IEnumerable<Release> releases) {
