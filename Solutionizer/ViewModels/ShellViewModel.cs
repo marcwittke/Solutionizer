@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Windows;
 using Caliburn.Micro;
 using Ookii.Dialogs.Wpf;
 using Solutionizer.Infrastructure;
@@ -9,15 +10,17 @@ namespace Solutionizer.ViewModels {
     public sealed class ShellViewModel : Screen, IShell {
         private readonly Services.Settings _settings;
         private readonly IDialogManager _dialogManager;
+        private readonly UpdateManager _updateManager;
         private readonly ProjectRepositoryViewModel _projectRepository;
         private SolutionViewModel _solution;
         private string _rootPath;
 
         [ImportingConstructor]
-        public ShellViewModel(Services.Settings settings, IDialogManager dialogManager) {
+        public ShellViewModel(Services.Settings settings, IDialogManager dialogManager, UpdateManager updateManager) {
             _settings = settings;
             _projectRepository = new ProjectRepositoryViewModel(settings);
             _dialogManager = dialogManager;
+            _updateManager = updateManager;
             DisplayName = "Solutionizer";
         }
 
