@@ -17,8 +17,15 @@ namespace Solutionizer.Infrastructure {
 
         public Func<Task<XDocument>> ReadLocalXml;
         public Func<Task<XDocument>> ReadRemoteXml;
+        public Func<XDocument, Task> WriteLocalXml;
 
         private List<Release> _releases;
+
+        public void Update() {
+            ReadLocalReleases()
+                .ContinueWith(_ => ReadRemoteReleases()).Unwrap()
+                .ContinueWith(_ => WriteLocalReleases());
+        }
 
         public Task ReadLocalReleases() {
             return ReadLocalXml().ContinueWith(t => {
@@ -32,7 +39,8 @@ namespace Solutionizer.Infrastructure {
         }
 
         public Task ReadRemoteReleases() {
-            return ReadRemoteXml().ContinueWith(t => {
+            var task = ReadRemoteXml();
+            return task.ContinueWith(t => {
                 try {
                     var releases = ReadReleases(t.Result);
                     var newReleases = releases.Where(r => _releases.All(_ => _.Version != r.Version)).ToList();
@@ -41,6 +49,10 @@ namespace Solutionizer.Infrastructure {
                     _log.ErrorException("Reading remote release file failed", ex);
                 }
             });
+        }
+
+        public Task WriteLocalReleases() {
+            return WriteLocalXml(WriteReleases(_releases));
         }
 
         public IEnumerable<Release> GetReleases() {
@@ -52,6 +64,10 @@ namespace Solutionizer.Infrastructure {
         }
 
         public static IEnumerable<Release> ReadReleases(XDocument doc) {
+            if (doc == null) {
+                _log.Info("No releases");
+                return Enumerable.Empty<Release>();
+            }
             try {
                 var releases = from release in doc.Descendants("Release")
                                select new Release {

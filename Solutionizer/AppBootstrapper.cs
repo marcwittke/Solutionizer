@@ -6,8 +6,10 @@ using System.ComponentModel.Composition.Primitives;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Xml.Linq;
 using Caliburn.Micro;
 using Caliburn.Micro.Logging.NLog;
@@ -15,6 +17,7 @@ using NLog;
 using NLog.Config;
 using NLog.Layouts;
 using NLog.Targets;
+using Solutionizer.Infrastructure;
 using Solutionizer.Services;
 using LogManager = NLog.LogManager;
 
@@ -24,6 +27,7 @@ namespace Solutionizer {
         private SettingsProvider _settingsProvider;
 
         private static readonly string _dataFolder;
+        private UpdateManager _updateManager;
 
         static AppBootstrapper() {
             if (!Execute.InDesignMode) {
@@ -59,6 +63,7 @@ namespace Solutionizer {
                 );
 
             _container = new CompositionContainer(catalog);
+            _updateManager = InitializeUpdateManager(_dataFolder);
 
             var batch = new CompositionBatch();
 
@@ -66,9 +71,26 @@ namespace Solutionizer {
             batch.AddExportedValue<IEventAggregator>(new EventAggregator());
             batch.AddExportedValue(_settingsProvider.Settings);
             batch.AddExportedValue(_container);
+            batch.AddExportedValue(_updateManager);
             batch.AddExportedValue(catalog);
 
             _container.Compose(batch);
+        }
+
+        protected override void OnStartup(object sender, StartupEventArgs e) {
+            base.OnStartup(sender, e);
+            _updateManager.Init();
+        }
+
+        private UpdateManager InitializeUpdateManager(string dataFolder) {
+            var version = GetType().Assembly.GetName().Version;
+            var localReleaseFile = Path.Combine(dataFolder, "releases.xml");
+            var remoteReleaseFile = Path.Combine(dataFolder, "remote_releases.xml");
+            return new UpdateManager(version) {
+                ReadLocalXml = () => Task.Factory.StartNew(() => File.Exists(localReleaseFile) ? XDocument.Load(localReleaseFile) : null),
+                ReadRemoteXml = () => Task.Factory.StartNew(() => File.Exists(remoteReleaseFile) ? XDocument.Load(remoteReleaseFile) : null),
+                WriteLocalXml = doc => Task.Factory.StartNew(() => doc.Save(localReleaseFile))
+            };
         }
 
         private static void ConfigureLogging() {
