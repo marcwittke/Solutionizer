@@ -86,11 +86,12 @@ namespace Solutionizer {
             var version = GetType().Assembly.GetName().Version;
             var localReleaseFile = Path.Combine(dataFolder, "releases.xml");
             var remoteReleaseFile = Path.Combine(dataFolder, "remote_releases.xml");
-            return new UpdateManager(version) {
-                ReadLocalXml = () => Task.Factory.StartNew(() => File.Exists(localReleaseFile) ? XDocument.Load(localReleaseFile) : null),
-                ReadRemoteXml = () => Task.Factory.StartNew(() => File.Exists(remoteReleaseFile) ? XDocument.Load(remoteReleaseFile) : null),
-                WriteLocalXml = doc => Task.Factory.StartNew(() => doc.Save(localReleaseFile))
+            var releaseFileHandler = new ReleaseFileHandler {
+                ReadLocalXml = () => File.Exists(localReleaseFile) ? XDocument.Load(localReleaseFile) : null,
+                ReadRemoteXml = () => File.Exists(remoteReleaseFile) ? XDocument.Load(remoteReleaseFile) : null,
+                WriteLocalXml = doc => doc.Save(localReleaseFile)
             };
+            return new UpdateManager(version, releaseFileHandler);
         }
 
         private static void ConfigureLogging() {

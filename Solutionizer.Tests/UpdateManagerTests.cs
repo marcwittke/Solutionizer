@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using NUnit.Framework;
@@ -36,7 +35,7 @@ namespace Solutionizer.Tests {
 
         [Test]
         public void NewUpdateManagerHasNoReleases() {
-            var sut = new UpdateManager(new Version(1,0,0,0));
+            var sut = new UpdateManager(new Version(1,0,0,0), null);
 
             var releases = sut.GetReleases().ToArray();
             Assert.AreEqual(0, releases.Length);
@@ -44,15 +43,12 @@ namespace Solutionizer.Tests {
 
         [Test]
         public void CanReadLocalReleases() {
-            var sut = new UpdateManager(new Version(1,0,0,0)) {
-                ReadLocalXml = () => {
-                    var tcs = new TaskCompletionSource<XDocument>();
-                    tcs.SetResult(XDocument.Parse(RELEASE_XML_1));
-                    return tcs.Task;
-                }
+            var rfh = new ReleaseFileHandler {
+                ReadLocalXml = () => XDocument.Parse(RELEASE_XML_1)
             };
+            var sut = new UpdateManager(new Version(1,0,0,0), rfh);
 
-            sut.ReadLocalReleases().Wait();
+            sut.ReadLocalReleases();
 
             Assert.IsFalse(sut.IsUpdateAvailable);
             var releases = sut.GetReleases().ToArray();
@@ -62,23 +58,14 @@ namespace Solutionizer.Tests {
 
         [Test]
         public void CanReadRemoteReleasesWithoutUpdates() {
-            var sut = new UpdateManager(new Version(1, 0, 0, 0)) {
-                ReadLocalXml = () => {
-                    var tcs = new TaskCompletionSource<XDocument>();
-                    tcs.SetResult(XDocument.Parse(RELEASE_XML_0));
-                    return tcs.Task;
-                },
-                ReadRemoteXml = () => {
-                    var tcs = new TaskCompletionSource<XDocument>();
-                    tcs.SetResult(XDocument.Parse(RELEASE_XML_1));
-                    return tcs.Task;
-                }
+            var rfh = new ReleaseFileHandler {
+                ReadLocalXml = () => XDocument.Parse(RELEASE_XML_0),
+                ReadRemoteXml = () => XDocument.Parse(RELEASE_XML_1),
+                WriteLocalXml = x => { }
             };
+            var sut = new UpdateManager(new Version(1, 0, 0, 0), rfh);
 
-            sut.ReadLocalReleases()
-                .ContinueWith(_ => sut.ReadRemoteReleases())
-                .Unwrap()
-                .Wait();
+            sut.Init().Wait();
 
             Assert.IsFalse(sut.IsUpdateAvailable);
             var releases = sut.GetReleases().ToArray();
@@ -88,23 +75,14 @@ namespace Solutionizer.Tests {
 
         [Test]
         public void CanReadRemoteReleasesWithUpdates() {
-            var sut = new UpdateManager(new Version(1, 0, 0, 0)) {
-                ReadLocalXml = () => {
-                    var tcs = new TaskCompletionSource<XDocument>();
-                    tcs.SetResult(XDocument.Parse(RELEASE_XML_0));
-                    return tcs.Task;
-                },
-                ReadRemoteXml = () => {
-                    var tcs = new TaskCompletionSource<XDocument>();
-                    tcs.SetResult(XDocument.Parse(RELEASE_XML_2));
-                    return tcs.Task;
-                }
+            var rfh = new ReleaseFileHandler {
+                ReadLocalXml = () => XDocument.Parse(RELEASE_XML_1),
+                ReadRemoteXml = () => XDocument.Parse(RELEASE_XML_2),
+                WriteLocalXml = x => { }
             };
+            var sut = new UpdateManager(new Version(1, 0, 0, 0), rfh);
 
-            sut.ReadLocalReleases()
-                .ContinueWith(_ => sut.ReadRemoteReleases())
-                .Unwrap()
-                .Wait();
+            sut.Init().Wait();
 
             Assert.IsTrue(sut.IsUpdateAvailable);
             var releases = sut.GetReleases().ToArray();

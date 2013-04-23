@@ -6,53 +6,50 @@ using System.Xml.Linq;
 using NLog;
 
 namespace Solutionizer.Infrastructure {
+    public class ReleaseFileHandler {
+        public Func<XDocument> ReadLocalXml;
+        public Func<XDocument> ReadRemoteXml;
+        public Action<XDocument> WriteLocalXml;
+    }
+
     public class UpdateManager {
         private static readonly Logger _log = LogManager.GetCurrentClassLogger();
 
         private readonly Version _currentVersion;
+        private readonly ReleaseFileHandler _releaseFileHandler;
 
-        public UpdateManager(Version currentVersion) {
+        public UpdateManager(Version currentVersion, ReleaseFileHandler releaseFileHandler) {
             _currentVersion = currentVersion;
+            _releaseFileHandler = releaseFileHandler;
         }
-
-        public Func<Task<XDocument>> ReadLocalXml;
-        public Func<Task<XDocument>> ReadRemoteXml;
-        public Func<XDocument, Task> WriteLocalXml;
 
         private List<Release> _releases;
 
-        public void Update() {
-            ReadLocalReleases()
-                .ContinueWith(_ => ReadRemoteReleases()).Unwrap()
-                .ContinueWith(_ => WriteLocalReleases());
+        public Task Init() {
+            return Task.Factory.StartNew(InitImpl);
         }
 
-        public Task ReadLocalReleases() {
-            return ReadLocalXml().ContinueWith(t => {
-                try {
-                    _releases = ReadReleases(t.Result).ToList();
-                } catch (Exception ex) {
-                    _log.ErrorException("Reading local release file failed", ex);
-                    _releases = new List<Release>();
-                }
-            });
+        private void InitImpl() {
+            ReadLocalReleases();
+            ReadRemoteReleases();
+            WriteLocalReleases();
         }
 
-        public Task ReadRemoteReleases() {
-            var task = ReadRemoteXml();
-            return task.ContinueWith(t => {
-                try {
-                    var releases = ReadReleases(t.Result);
-                    var newReleases = releases.Where(r => _releases.All(_ => _.Version != r.Version)).ToList();
-                    _releases.AddRange(newReleases);
-                } catch (Exception ex) {
-                    _log.ErrorException("Reading remote release file failed", ex);
-                }
-            });
+        public void ReadLocalReleases() {
+            var xdoc = _releaseFileHandler.ReadLocalXml();
+            _releases = ReadReleases(xdoc).ToList();
         }
 
-        public Task WriteLocalReleases() {
-            return WriteLocalXml(WriteReleases(_releases));
+        public void ReadRemoteReleases() {
+            var doc = _releaseFileHandler.ReadRemoteXml();
+            var releases = ReadReleases(doc);
+            var newReleases = releases.Where(r => _releases.All(_ => _.Version != r.Version)).ToList();
+            _releases.AddRange(newReleases);
+        }
+
+        public void WriteLocalReleases() {
+            var doc = WriteReleases(_releases);
+            _releaseFileHandler.WriteLocalXml(doc);
         }
 
         public IEnumerable<Release> GetReleases() {
