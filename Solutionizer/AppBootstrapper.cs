@@ -77,11 +77,6 @@ namespace Solutionizer {
             _container.Compose(batch);
         }
 
-        protected override void OnStartup(object sender, StartupEventArgs e) {
-            base.OnStartup(sender, e);
-            _updateManager.Init();
-        }
-
         private UpdateManager InitializeUpdateManager(string dataFolder) {
             var version = GetType().Assembly.GetName().Version;
             var localReleaseFile = Path.Combine(dataFolder, "releases.xml");

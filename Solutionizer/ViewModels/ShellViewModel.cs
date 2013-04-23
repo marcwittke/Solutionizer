@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿using System.Threading.Tasks;
 using System.Windows;
 using Caliburn.Micro;
 using Ookii.Dialogs.Wpf;
@@ -14,6 +14,7 @@ namespace Solutionizer.ViewModels {
         private readonly ProjectRepositoryViewModel _projectRepository;
         private SolutionViewModel _solution;
         private string _rootPath;
+        private bool _updateAvailable;
 
         [ImportingConstructor]
         public ShellViewModel(Services.Settings settings, IDialogManager dialogManager, UpdateManager updateManager) {
@@ -48,6 +49,16 @@ namespace Solutionizer.ViewModels {
             }
         }
 
+        public bool UpdateAvailable {
+            get { return _updateAvailable; }
+            set {
+                if (_updateAvailable != value) {
+                    _updateAvailable = value;
+                    NotifyOfPropertyChange(() => UpdateAvailable);
+                }
+            }
+        }
+
         public Services.Settings Settings {
             get { return _settings; }
         }
@@ -58,7 +69,17 @@ namespace Solutionizer.ViewModels {
             if (_settings.ScanOnStartup) {
                 LoadProjects(_settings.RootPath);
             }
+
+            _updateManager.Init().ContinueWith(OnUpdateManagerInitialized);
         }
+
+        private void OnUpdateManagerInitialized(Task _) {
+            if (_updateManager.IsUpdateAvailable) {
+                UpdateAvailable = true;
+            }
+        }
+
+        public void Update(){}
 
         public void SelectRootPath() {
             var dlg = new VistaFolderBrowserDialog {
