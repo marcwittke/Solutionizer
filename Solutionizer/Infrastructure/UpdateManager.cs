@@ -70,7 +70,8 @@ namespace Solutionizer.Infrastructure {
                                select new Release {
                                    Version = Version.Parse(release.Element("Version").Value),
                                    PublishedAt = DateTimeOffset.ParseExact(release.Element("PublishedAt").Value, "u", null),
-                                   Notes = release.Element("Notes").Value
+                                   Notes = release.Element("Notes").Value,
+                                   PackageUrl = release.Element("PackageUrl").Value,
                                };
                 return releases;
             } catch (Exception ex) {
@@ -86,7 +87,8 @@ namespace Solutionizer.Infrastructure {
                              select new XElement("Release",
                                                  new XElement("Version", r.Version.ToString()),
                                                  new XElement("PublishedAt", r.PublishedAt.ToString("u")),
-                                                 new XElement("Notes", r.Notes))
+                                                 new XElement("Notes", r.Notes),
+                                                 new XElement("PackageUrl", r.PackageUrl))
 
                     ));
         }
@@ -96,5 +98,6 @@ namespace Solutionizer.Infrastructure {
         public Version Version { get; set; }
         public DateTimeOffset PublishedAt { get; set; }
         public string Notes { get; set; }
+        public string PackageUrl { get; set; }
     }
 }

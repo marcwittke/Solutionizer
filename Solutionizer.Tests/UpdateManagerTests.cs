@@ -17,6 +17,7 @@ namespace Solutionizer.Tests {
     <Version>1.0.0.0</Version>
     <PublishedAt>2013-04-01 13:00:00Z</PublishedAt>
     <Notes>tata</Notes>
+    <PackageUrl></PackageUrl>
   </Release>
 </Releases>";
         private const string RELEASE_XML_2 = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -25,11 +26,13 @@ namespace Solutionizer.Tests {
     <Version>1.0.0.0</Version>
     <PublishedAt>2013-04-01 13:00:00Z</PublishedAt>
     <Notes>tata</Notes>
+    <PackageUrl></PackageUrl>
   </Release>
   <Release>
     <Version>1.1.0.0</Version>
     <PublishedAt>2013-04-01 14:00:00Z</PublishedAt>
     <Notes>tata2</Notes>
+    <PackageUrl></PackageUrl>
   </Release>
 </Releases>";
 
@@ -107,7 +110,8 @@ namespace Solutionizer.Tests {
                 new Release {
                     Version = new Version(1, 0, 0, 0),
                     PublishedAt = new DateTimeOffset(2013, 4, 1, 12, 0, 0, TimeSpan.FromHours(-1)),
-                    Notes = "tata"
+                    Notes = "tata",
+                    PackageUrl = String.Empty
                 }
             };
             var doc = UpdateManager.WriteReleases(releases);
@@ -123,12 +127,14 @@ namespace Solutionizer.Tests {
         }
 
         private static string XDocumentToString(XDocument doc) {
-            using (var mem = new MemoryStream())
-            using (var writer = new XmlTextWriter(mem, System.Text.Encoding.UTF8)) {
-                writer.Formatting = Formatting.Indented;
-                doc.WriteTo(writer);
-                writer.Flush();
-                mem.Flush();
+            using (var mem = new MemoryStream()) {
+                var settings = new XmlWriterSettings {
+                    Encoding = System.Text.Encoding.UTF8,
+                    Indent = true,
+                };
+                using (var writer = XmlWriter.Create(mem, settings)) {
+                    doc.WriteTo(writer);
+                }
                 mem.Seek(0, SeekOrigin.Begin);
                 using (var reader = new StreamReader(mem)) {
                     return reader.ReadToEnd();
