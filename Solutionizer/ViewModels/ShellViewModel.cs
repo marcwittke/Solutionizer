@@ -74,12 +74,14 @@ namespace Solutionizer.ViewModels {
         }
 
         private void OnUpdateManagerInitialized(Task _) {
-            if (_updateManager.IsUpdateAvailable) {
+            //if (_updateManager.IsUpdateAvailable) {
                 UpdateAvailable = true;
-            }
+            //}
         }
 
-        public void Update(){}
+        public void Update() {
+            _dialogManager.ShowDialog(new UpdateViewModel(_updateManager));
+        }
 
         public void SelectRootPath() {
             var dlg = new VistaFolderBrowserDialog {

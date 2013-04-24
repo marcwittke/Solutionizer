@@ -29,6 +29,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -145,6 +146,7 @@
     <Compile Include="ViewModels\SolutionItem.cs" />
     <Compile Include="ViewModels\SolutionItemComparer.cs" />
     <Compile Include="ViewModels\SolutionProject.cs" />
+    <Compile Include="ViewModels\UpdateViewModel.cs" />
     <Page Include="Controls\FluidProgressBar.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -170,6 +172,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\SolutionView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UpdateView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

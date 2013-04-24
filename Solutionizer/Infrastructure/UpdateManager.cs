@@ -60,6 +60,10 @@ namespace Solutionizer.Infrastructure {
             get { return _releases.Any(r => r.Version > _currentVersion); }
         }
 
+        public IEnumerable<Release> GetNewReleases() {
+            return GetReleases().Where(r => r.Version > _currentVersion);
+        }
+
         public static IEnumerable<Release> ReadReleases(XDocument doc) {
             if (doc == null) {
                 _log.Info("No releases");
